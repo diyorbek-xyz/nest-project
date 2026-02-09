@@ -100,6 +100,8 @@ export class VideoProcessor {
 
 			ffmpeg.on('error', (err) => {
 				console.error('FFmpeg Error:', err.message);
+				fs.unlinkSync(inputPath);
+				console.error('Removed File:', inputPath);
 				reject(err);
 			});
 
@@ -109,6 +111,8 @@ export class VideoProcessor {
 					resolve(`${outputDir}/master.m3u8`);
 				} else {
 					reject(new Error(`FFmpeg exited with code ${code}`));
+					fs.unlinkSync(inputPath);
+					console.error('Removed File:', inputPath);
 				}
 			});
 		});
@@ -200,6 +204,8 @@ export class VideoProcessor {
 			const out = generateVTT(count);
 			return out;
 		} catch (err) {
+			fs.unlinkSync(inputPath);
+			console.info('Removed file:', inputPath);
 			console.error(err);
 			return err;
 		}

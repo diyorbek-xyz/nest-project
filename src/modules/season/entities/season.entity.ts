@@ -16,6 +16,9 @@ export class SeasonEntity {
 	@Column({ default: 'poster' })
 	poster: string;
 
+	@Column({ default: '' })
+	folder: string;
+
 	@ManyToOne(() => AnimeEntity, (anime) => anime.seasons)
 	anime: AnimeEntity;
 

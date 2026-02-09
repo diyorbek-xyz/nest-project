@@ -34,7 +34,6 @@ export class PosterProcessor {
 				.toFile(outputPath)
 				.then(() => console.info('Poster compression completed!'));
 
-			fs.unlinkSync(inputPath);
 			return outputPath;
 		} catch (err) {
 			console.error(err);
