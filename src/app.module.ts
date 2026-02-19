@@ -1,41 +1,52 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import path from 'path';
 import { DataSource } from 'typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AnimeModule } from './modules/anime/anime.module';
-import { AnimeEntity } from './modules/anime/entities/anime.entity';
-import { EpisodeEntity } from './modules/episode/entities/episode.entity';
-import { EpisodeModule } from './modules/episode/episode.module';
-import { SeasonEntity } from './modules/season/entities/season.entity';
-import { SeasonModule } from './modules/season/season.module';
 
 @Module({
 	imports: [
+		ConfigModule.forRoot({ isGlobal: true, envFilePath: `.env.${process.env.NODE_ENV || 'development'}` }),
 		ServeStaticModule.forRoot({
 			rootPath: path.join(__dirname, '..', 'uploads'),
 			serveRoot: '/uploads',
 		}),
-		TypeOrmModule.forRoot({
-			type: 'mariadb',
-			host: 'localhost',
-			port: 3306,
-			username: 'user',
-			password: '5588',
-			database: 'animes',
-			entities: [AnimeEntity, EpisodeEntity, SeasonEntity],
-			synchronize: true,
-			autoLoadEntities: true,
+		TypeOrmModule.forRootAsync({
+			inject: [ConfigService],
+			useFactory: (config: ConfigService) => {
+				const dbType = config.get<'sqlite' | 'mariadb'>('DB_TYPE');
+				const entities = [];
+				if (dbType === 'sqlite') {
+					return {
+						type: 'sqlite',
+						database: config.get<string>('SQLITE_DB'),
+						entities: entities,
+						autoLoadEntities: true,
+						synchronize: true,
+					};
+				}
+				return {
+					type: 'mariadb',
+					host: config.get<string>('DB_HOST'),
+					port: config.get<number>('DB_PORT'),
+					username: config.get<string>('DB_USERNAME'),
+					password: config.get<string>('DB_PASSWORD'),
+					database: config.get<string>('DB_NAME'),
+					entities: entities,
+					synchronize: true,
+					autoLoadEntities: true,
+				};
+			},
 		}),
-		AnimeModule,
-		EpisodeModule,
-		SeasonModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],
 })
 export class AppModule {
-	constructor(private dataSource: DataSource) {}
+	constructor(private dataSource: DataSource) {
+		console.log(process.env.DB_TYPE);
+	}
 }
