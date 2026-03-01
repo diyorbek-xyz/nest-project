@@ -1,46 +1,41 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import path from 'path';
 import { DataSource } from 'typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { Anime } from './modules/anime/entities/anime.entity';
+import { AuthModule } from './modules/auth/auth.module';
+import { Episode } from './modules/episode/entities/episode.entity';
+import { EpisodeModule } from './modules/episode/episode.module';
+import { History } from './modules/history/entities/history.entity';
+import { HistoryModule } from './modules/history/history.module';
+import { Season } from './modules/season/entities/season.entity';
+import { SeasonModule } from './modules/season/season.module';
+import { Studio } from './modules/studio/entities/studio.entity';
+import { StudioModule } from './modules/studio/studio.module';
+import { User } from './modules/users/entities/user.entity';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ isGlobal: true, envFilePath: `.env.${process.env.NODE_ENV || 'development'}` }),
-		ServeStaticModule.forRoot({
-			rootPath: path.join(__dirname, '..', 'uploads'),
-			serveRoot: '/uploads',
+		TypeOrmModule.forRoot({
+			type: 'postgres',
+			host: 'localhost',
+			port: 5432,
+			username: 'postgres',
+			password: '',
+			database: 'project',
+			schema: 'anibla',
+			synchronize: true,
+			autoLoadEntities: true,
+			entities: [Episode, Anime, Season, User, Studio, History],
 		}),
-		TypeOrmModule.forRootAsync({
-			inject: [ConfigService],
-			useFactory: (config: ConfigService) => {
-				const dbType = config.get<'sqlite' | 'mariadb'>('DB_TYPE');
-				const entities = [];
-				if (dbType === 'sqlite') {
-					return {
-						type: 'sqlite',
-						database: config.get<string>('SQLITE_DB'),
-						entities: entities,
-						autoLoadEntities: true,
-						synchronize: true,
-					};
-				}
-				return {
-					type: 'mariadb',
-					host: config.get<string>('DB_HOST'),
-					port: config.get<number>('DB_PORT'),
-					username: config.get<string>('DB_USERNAME'),
-					password: config.get<string>('DB_PASSWORD'),
-					database: config.get<string>('DB_NAME'),
-					entities: entities,
-					synchronize: true,
-					autoLoadEntities: true,
-				};
-			},
-		}),
+		UsersModule,
+		AuthModule,
+		EpisodeModule,
+		SeasonModule,
+		StudioModule,
+		HistoryModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],
